@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans text-forest-900 bg-earth-50 antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-medium tracking-tight;
+  }
+
+  ::selection {
+    @apply bg-forest-300/40 text-forest-900;
+  }
+}
+
+@layer components {
+  /* Premium Button Styles */
+  .btn-premium {
+    @apply relative inline-flex items-center justify-center px-10 py-4
+           font-medium text-sm tracking-wider uppercase
+           bg-forest-700 text-white rounded-none
+           overflow-hidden transition-all duration-500 ease-out-expo
+           hover:bg-forest-800 hover:shadow-premium
+           active:scale-[0.98];
+  }
+
+  .btn-premium::before {
+    @apply content-[''] absolute inset-0 bg-gold-gradient opacity-0
+           transition-opacity duration-500;
+  }
+
+  .btn-premium:hover::before {
+    @apply opacity-100;
+  }
+
+  .btn-premium span {
+    @apply relative z-10;
+  }
+
+  .btn-outline-premium {
+    @apply relative inline-flex items-center justify-center px-10 py-4
+           font-medium text-sm tracking-wider uppercase
+           bg-transparent text-forest-800 rounded-none
+           border border-forest-800/30
+           overflow-hidden transition-all duration-500 ease-out-expo
+           hover:border-forest-800 hover:bg-forest-800 hover:text-white
+           active:scale-[0.98];
+  }
+
+  .btn-gold {
+    @apply relative inline-flex items-center justify-center px-10 py-4
+           font-medium text-sm tracking-wider uppercase
+           bg-gold-500 text-white rounded-none
+           overflow-hidden transition-all duration-500 ease-out-expo
+           hover:bg-gold-600 hover:shadow-glow
+           active:scale-[0.98];
+  }
+
+  /* Premium Card Styles */
+  .card-premium {
+    @apply relative bg-white rounded-none overflow-hidden
+           shadow-elegant transition-all duration-700 ease-out-expo
+           hover:shadow-premium hover:-translate-y-2;
+  }
+
+  .card-premium::after {
+    @apply content-[''] absolute inset-0 border border-forest-900/5
+           pointer-events-none transition-opacity duration-500;
+  }
+
+  .card-premium:hover::after {
+    @apply border-forest-900/10;
+  }
+
+  /* Section Spacing */
+  .section-luxury {
+    @apply py-24 md:py-32 lg:py-40;
+  }
+
+  .section-luxury-sm {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+
+  /* Container */
+  .container-luxury {
+    @apply max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 xl:px-16;
+  }
+
+  .container-narrow {
+    @apply max-w-5xl mx-auto px-6 sm:px-8 lg:px-12;
+  }
+
+  /* Text Styles */
+  .text-label {
+    @apply text-xs font-medium tracking-[0.3em] uppercase;
+  }
+
+  .text-label-gold {
+    @apply text-label text-gold-600;
+  }
+
+  /* Divider */
+  .divider-gold {
+    @apply w-16 h-px bg-gold-gradient mx-auto;
+  }
+
+  .divider-vertical {
+    @apply w-px h-20 bg-gradient-to-b from-transparent via-forest-300 to-transparent;
+  }
+
+  /* Image Overlay */
+  .image-overlay {
+    @apply relative overflow-hidden;
+  }
+
+  .image-overlay::before {
+    @apply content-[''] absolute inset-0 bg-forest-900/20
+           transition-opacity duration-500 z-10;
+  }
+
+  .image-overlay:hover::before {
+    @apply opacity-0;
+  }
+
+  /* Premium Input */
+  .input-premium {
+    @apply w-full px-0 py-4 bg-transparent border-0 border-b border-forest-300
+           text-forest-800 placeholder:text-forest-400
+           focus:outline-none focus:border-forest-600
+           transition-colors duration-300;
+  }
+
+  /* Magnetic Button Effect Base */
+  .magnetic-wrap {
+    @apply relative inline-block;
+  }
+}
+
+@layer utilities {
+  /* Animation Delays */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+  .delay-600 { animation-delay: 600ms; }
+  .delay-700 { animation-delay: 700ms; }
+  .delay-800 { animation-delay: 800ms; }
+
+  /* Text Balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Hide Scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Line Clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f3ed;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #52784d;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3d5c39;
+}
+
+/* Smooth Scroll for Anchor Links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus Styles */
+:focus-visible {
+  outline: 2px solid #52784d;
+  outline-offset: 2px;
+}
+
+/* Image Loading Placeholder */
+.img-placeholder {
+  background: linear-gradient(135deg, #e8e4d8 0%, #d6cfba 100%);
+  animation: shimmer 2s infinite;
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Premium Hover Underline */
+.hover-underline {
+  @apply relative;
+}
+
+.hover-underline::after {
+  @apply content-[''] absolute bottom-0 left-0 w-0 h-px bg-current
+         transition-all duration-500 ease-out-expo;
+}
+
+.hover-underline:hover::after {
+  @apply w-full;
+}
+
+/* Grain Texture Overlay */
+.grain {
+  position: relative;
+}
+
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 1;
+}

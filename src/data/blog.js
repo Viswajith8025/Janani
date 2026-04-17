@@ -1,0 +1,38 @@
+export const blogPosts = [
+  {
+    id: 1,
+    title: 'The Art of Mindful Living in the Western Ghats',
+    excerpt: 'Discover how the serene environment of Wayanad serves as the perfect backdrop for deep spiritual reconnection.',
+    category: 'Wellness',
+    date: 'April 10, 2026',
+    image: '/assets/blog/mindful.jpg',
+    readTime: '5 min read',
+  },
+  {
+    id: 2,
+    title: 'Nourishing the Soul: Farm-to-Table Ayurveda',
+    excerpt: 'Exploring the vital connection between the earth, the food we grow, and the healing of our physical bodies.',
+    category: 'Nutrition',
+    date: 'March 28, 2026',
+    image: '/assets/blog/nutrition.jpg',
+    readTime: '7 min read',
+  },
+  {
+    id: 3,
+    title: 'The Resilience of Mud: Why We Build Traditionally',
+    excerpt: 'Uncovering the ancient science behind mud houses and how they maintain the perfectly cooled environment for healing.',
+    category: 'Architecture',
+    date: 'March 15, 2026',
+    image: '/assets/blog/architecture.jpg',
+    readTime: '4 min read',
+  },
+  {
+    id: 4,
+    title: 'Pranayama: The Gift of Conscious Breath',
+    excerpt: 'Simple techniques you can take home from Janani to maintain your inner balance in a busy world.',
+    category: 'Yoga',
+    date: 'March 05, 2026',
+    image: '/assets/blog/yoga.jpg',
+    readTime: '6 min read',
+  },
+];

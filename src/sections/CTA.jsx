@@ -2,8 +2,7 @@ import { motion } from 'framer-motion';
 import { FadeIn, ScaleIn } from '../components/AnimatedText';
 import { Check, ArrowRight, Send, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import emailjs from '@emailjs/browser';
-import { EMAILJS_CONFIG } from '../config/emailjs';
+import { apiFetch } from '../config/api';
 import Magnetic from '../components/Magnetic';
 
 const CTA = () => {
@@ -38,25 +37,25 @@ const CTA = () => {
     setSendError('');
 
     try {
-      if (EMAILJS_CONFIG.publicKey !== 'YOUR_PUBLIC_KEY') {
-        await emailjs.send(
-          EMAILJS_CONFIG.serviceId,
-          EMAILJS_CONFIG.contactTemplateId,
-          {
-            from_name: formData.name,
-            from_email: formData.email,
-            phone: formData.phone,
-            dates: formData.dates,
-            message: formData.message,
-          },
-          EMAILJS_CONFIG.publicKey
-        );
-      }
+      await apiFetch('/contact', {
+        method: 'POST',
+        body: JSON.stringify({
+          name:           formData.name,
+          email:          formData.email,
+          phone:          formData.phone || undefined,
+          preferredDates: formData.dates  || undefined,
+          message:        formData.message,
+          subject:        'general',
+          source:         'website',
+        }),
+      });
       setIsSubmitted(true);
       setFormData({ name: '', email: '', phone: '', dates: '', message: '' });
-      setTimeout(() => setIsSubmitted(false), 5000);
-    } catch (error) {
-      setSendError('Something went wrong. Please try again or contact us via WhatsApp.');
+      setTimeout(() => setIsSubmitted(false), 6000);
+    } catch (err) {
+      setSendError(
+        err.message || 'Something went wrong. Please try again or contact us via WhatsApp.'
+      );
     } finally {
       setIsSending(false);
     }

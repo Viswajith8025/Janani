@@ -1,16 +1,18 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import ExperienceCard from '../components/ExperienceCard';
-import { experiences } from '../data/experiences';
+import { experiences as staticExperiences } from '../data/experiences';
 import { FadeIn, StaggerContainer, StaggerItem } from '../components/AnimatedText';
 import { useEffect, useState } from 'react';
 import Magnetic from '../components/Magnetic';
 import ExperienceModal from '../components/ExperienceModal';
+import { apiFetch } from '../config/api';
 
 const Experiences = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [selectedExp, setSelectedExp] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [experiences, setExperiences] = useState(staticExperiences);
 
   const handleOpenModal = (exp) => {
     setSelectedExp(exp);
@@ -27,6 +29,19 @@ const Experiences = () => {
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
+
+    const fetchExperiences = async () => {
+      try {
+        const res = await apiFetch('/experiences');
+        if (res.data && res.data.length > 0) {
+          setExperiences(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch experiences, using fallback data', err);
+      }
+    };
+    fetchExperiences();
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
@@ -89,7 +104,7 @@ const Experiences = () => {
           delay={0.3}
         >
           {experiences.map((experience, index) => (
-            <StaggerItem key={experience.id}>
+            <StaggerItem key={experience.id || experience._id}>
               <Magnetic strength={0.15}>
                 <ExperienceCard 
                   experience={experience} 
@@ -134,3 +149,4 @@ const Experiences = () => {
 };
 
 export default Experiences;
+

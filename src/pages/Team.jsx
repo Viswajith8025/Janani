@@ -1,10 +1,39 @@
 import { motion } from 'framer-motion';
-import { teamMembers } from '../data/team';
+import { useState, useEffect } from 'react';
+import { teamMembers as staticTeamMembers } from '../data/team';
 import { FadeIn, BlurIn, StaggerContainer, StaggerItem } from '../components/AnimatedText';
 import { Shield, Award, Heart } from 'lucide-react';
 import Magnetic from '../components/Magnetic';
+import { apiFetch } from '../config/api';
 
 const Team = () => {
+  const [teamMembers, setTeamMembers] = useState(staticTeamMembers);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      try {
+        const res = await apiFetch('/team');
+        if (res.data && res.data.length > 0) {
+          setTeamMembers(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch team members, using fallback data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTeam();
+  }, []);
+
+  if (loading && teamMembers.length === 0) {
+    return (
+      <div className="min-h-screen bg-earth-50 pt-32 pb-20 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-gold-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-earth-50 pt-32 pb-20">
       <div className="container-luxury">
@@ -29,7 +58,7 @@ const Team = () => {
         {/* Team Grid */}
         <StaggerContainer className="grid md:grid-cols-2 gap-12 lg:gap-16">
           {teamMembers.map((member) => (
-            <StaggerItem key={member.id}>
+            <StaggerItem key={member.id || member._id}>
               <div className="group relative">
                 <div className="grid sm:grid-cols-5 gap-8 items-center">
                   {/* Image Side */}
@@ -53,16 +82,18 @@ const Team = () => {
                       {member.bio}
                     </p>
                     
-                    <div className="space-y-3">
-                      <p className="text-forest-800 text-xs font-medium tracking-wider uppercase mb-3">Specialisms</p>
-                      <div className="flex flex-wrap gap-2">
-                        {member.specialties.map((spec) => (
-                          <span key={spec} className="px-3 py-1 bg-white border border-forest-100 text-forest-600 text-[10px] tracking-wide uppercase">
-                            {spec}
-                          </span>
-                        ))}
+                    {member.specialties && member.specialties.length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-forest-800 text-xs font-medium tracking-wider uppercase mb-3">Specialisms</p>
+                        <div className="flex flex-wrap gap-2">
+                          {member.specialties.map((spec) => (
+                            <span key={spec} className="px-3 py-1 bg-white border border-forest-100 text-forest-600 text-[10px] tracking-wide uppercase">
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -118,3 +149,4 @@ const Team = () => {
 };
 
 export default Team;
+

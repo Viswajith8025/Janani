@@ -1,7 +1,20 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import { useEffect } from 'react';
 import Magnetic from './Magnetic';
+
+const iconMap = {
+  Leaf: Icons.Leaf,
+  Heart: Icons.Heart,
+  Sun: Icons.Sun,
+  Mountain: Icons.Mountain,
+  Flame: Icons.Flame,
+  Droplets: Icons.Droplets,
+  Wind: Icons.Wind,
+  Moon: Icons.Moon,
+  Sparkles: Icons.Sparkles
+};
 
 const ExperienceModal = ({ isOpen, onClose, experience }) => {
   // Lock scroll when modal is open
@@ -17,6 +30,13 @@ const ExperienceModal = ({ isOpen, onClose, experience }) => {
   }, [isOpen]);
 
   if (!experience) return null;
+
+  // Resolve icon component
+  const getIcon = () => {
+    if (typeof experience.icon === 'function') return experience.icon;
+    return iconMap[experience.icon] || Icons.Sparkles;
+  };
+  const Icon = getIcon();
 
   return (
     <AnimatePresence>
@@ -74,7 +94,7 @@ const ExperienceModal = ({ isOpen, onClose, experience }) => {
               >
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-gold-50 rounded-2xl flex items-center justify-center">
-                    <experience.icon className="w-6 h-6 text-gold-600" />
+                    <Icon className="w-6 h-6 text-gold-600" />
                   </div>
                   <span className="text-gold-600 font-medium tracking-[0.2em] uppercase text-[10px] md:text-xs">
                     Experiences
@@ -120,3 +140,4 @@ const ExperienceModal = ({ isOpen, onClose, experience }) => {
 };
 
 export default ExperienceModal;
+

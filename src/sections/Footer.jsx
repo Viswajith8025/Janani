@@ -2,11 +2,17 @@ import { motion } from 'framer-motion';
 import { Instagram, Facebook, Youtube, ArrowUp, Send } from 'lucide-react';
 import { FadeIn } from '../components/AnimatedText';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { apiFetch } from '../config/api';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Newsletter
+  const [subEmail, setSubEmail]   = useState('');
+  const [subState, setSubState]   = useState('idle'); // idle|loading|success|duplicate|error
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -163,24 +169,53 @@ const Footer = () => {
               Subscribe for retreat updates, wellness tips, and exclusive offers.
             </p>
 
-            <form className="space-y-2 md:space-y-3" onSubmit={(e) => e.preventDefault()}
+            <form
+              className="space-y-2 md:space-y-3"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!subEmail || subState === 'loading') return;
+                setSubState('loading');
+                try {
+                  await apiFetch('/newsletter/subscribe', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: subEmail }),
+                  });
+                  setSubState('success');
+                  setSubEmail('');
+                } catch (err) {
+                  setSubState(err.status === 409 ? 'duplicate' : 'error');
+                }
+              }}
             >
-              <div className="relative"
-              >
-                <input
-                  type="email"
-                  placeholder="Your email address"
-                  className="w-full px-4 py-3 md:py-4 bg-white/5 border border-white/10 text-white placeholder:text-white/30
-                           focus:outline-none focus:border-gold-500/50 transition-colors text-sm pr-12"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-gold-500/20 flex items-center justify-center
-                           hover:bg-gold-500/30 transition-colors"
-                >
-                  <Send className="w-3.5 h-3.5 md:w-4 md:h-4 text-gold-400" />
-                </button>
-              </div>
+              {subState === 'success' ? (
+                <p className="text-gold-400 text-xs py-3">🌿 You're subscribed. Welcome to the Janani Journal!</p>
+              ) : subState === 'duplicate' ? (
+                <p className="text-white/50 text-xs py-3">This email is already subscribed.</p>
+              ) : (
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={subEmail}
+                    onChange={(e) => setSubEmail(e.target.value)}
+                    placeholder="Your email address"
+                    required
+                    className="w-full px-4 py-3 md:py-4 bg-white/5 border border-white/10 text-white placeholder:text-white/30
+                             focus:outline-none focus:border-gold-500/50 transition-colors text-sm pr-12"
+                  />
+                  <button
+                    type="submit"
+                    disabled={subState === 'loading'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-gold-500/20 flex items-center justify-center
+                             hover:bg-gold-500/30 transition-colors disabled:opacity-50"
+                    aria-label="Subscribe"
+                  >
+                    <Send className="w-3.5 h-3.5 md:w-4 md:h-4 text-gold-400" />
+                  </button>
+                </div>
+              )}
+              {subState === 'error' && (
+                <p className="text-red-400 text-xs">Something went wrong. Please try again.</p>
+              )}
             </form>
 
             <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-white/10"

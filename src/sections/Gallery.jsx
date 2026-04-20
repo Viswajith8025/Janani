@@ -1,17 +1,32 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
-import { galleryImages } from '../data/testimonials';
+import { galleryImages as staticGalleryImages } from '../data/testimonials';
 import { FadeIn, StaggerContainer, StaggerItem } from '../components/AnimatedText';
 import { X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { apiFetch } from '../config/api';
 
 const Gallery = () => {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [galleryImages, setGalleryImages] = useState(staticGalleryImages);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
+
+    const fetchGallery = async () => {
+      try {
+        const res = await apiFetch('/gallery');
+        if (res.data && res.data.length > 0) {
+          setGalleryImages(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch gallery images, using fallback data', err);
+      }
+    };
+    fetchGallery();
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
@@ -27,11 +42,11 @@ const Gallery = () => {
 
   const goNext = useCallback(() => {
     setSelectedIndex((prev) => (prev + 1) % galleryImages.length);
-  }, []);
+  }, [galleryImages.length]);
 
   const goPrev = useCallback(() => {
     setSelectedIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
-  }, []);
+  }, [galleryImages.length]);
 
   const closeLightbox = useCallback(() => {
     setSelectedIndex(null);
@@ -107,7 +122,7 @@ const Gallery = () => {
         >
           {galleryImages.map((image, index) => (
             <StaggerItem
-              key={image.id}
+              key={image.id || image._id}
               className={isMobile ? '' : image.span}
             >
               <motion.div
@@ -196,7 +211,7 @@ const Gallery = () => {
             {/* Image */}
             <AnimatePresence mode="wait">
               <motion.img
-                key={selectedImage.id}
+                key={selectedImage.id || selectedImage._id}
                 src={selectedImage.src}
                 alt={selectedImage.alt}
                 className="max-w-[80vw] max-h-[80vh] object-contain"
@@ -225,3 +240,4 @@ const Gallery = () => {
 };
 
 export default Gallery;
+

@@ -1,34 +1,51 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useCallback } from 'react';
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
-import { testimonials } from '../data/testimonials';
+import { testimonials as staticTestimonials } from '../data/testimonials';
 import { FadeIn } from '../components/AnimatedText';
+import { apiFetch } from '../config/api';
 
 const Testimonials = () => {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [testimonials, setTestimonials] = useState(staticTestimonials);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
+    
+    const fetchTestimonials = async () => {
+      try {
+        const res = await apiFetch('/testimonial');
+        if (res.data && res.data.length > 0) {
+          setTestimonials(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch testimonials, using fallback data', err);
+      }
+    };
+    fetchTestimonials();
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const paginate = useCallback((newDirection) => {
+    if (testimonials.length === 0) return;
     setDirection(newDirection);
     setCurrent((prev) => {
       if (newDirection === 1) return (prev + 1) % testimonials.length;
       return (prev - 1 + testimonials.length) % testimonials.length;
     });
-  }, []);
+  }, [testimonials.length]);
 
   // Auto-advance
   useEffect(() => {
+    if (testimonials.length <= 1) return;
     const interval = setInterval(() => paginate(1), 6000);
     return () => clearInterval(interval);
-  }, [paginate]);
+  }, [paginate, testimonials.length]);
 
   const variants = {
     enter: (dir) => ({
@@ -46,6 +63,8 @@ const Testimonials = () => {
   };
 
   const testimonial = testimonials[current];
+
+  if (!testimonial) return null;
 
   return (
     <section
@@ -139,7 +158,7 @@ const Testimonials = () => {
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-12 h-12 bg-forest-100 rounded-full flex items-center justify-center">
                       <span className="font-serif text-forest-700 text-sm font-medium">
-                        {testimonial.initials}
+                        {testimonial.initials || testimonial.name.charAt(0)}
                       </span>
                     </div>
                     <div>
@@ -155,43 +174,49 @@ const Testimonials = () => {
               </AnimatePresence>
 
               {/* Navigation Arrows */}
-              <button
-                onClick={() => paginate(-1)}
-                className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center
-                         hover:bg-forest-50 transition-colors rounded-full"
-                aria-label="Previous testimonial"
-              >
-                <ChevronLeft className="w-5 h-5 text-forest-400" />
-              </button>
-              <button
-                onClick={() => paginate(1)}
-                className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center
-                         hover:bg-forest-50 transition-colors rounded-full"
-                aria-label="Next testimonial"
-              >
-                <ChevronRight className="w-5 h-5 text-forest-400" />
-              </button>
+              {testimonials.length > 1 && (
+                <>
+                  <button
+                    onClick={() => paginate(-1)}
+                    className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center
+                             hover:bg-forest-50 transition-colors rounded-full"
+                    aria-label="Previous testimonial"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-forest-400" />
+                  </button>
+                  <button
+                    onClick={() => paginate(1)}
+                    className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center
+                             hover:bg-forest-50 transition-colors rounded-full"
+                    aria-label="Next testimonial"
+                  >
+                    <ChevronRight className="w-5 h-5 text-forest-400" />
+                  </button>
+                </>
+              )}
             </div>
           </FadeIn>
 
           {/* Dots Indicator */}
-          <div className="flex justify-center gap-2 mt-8">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setDirection(index > current ? 1 : -1);
-                  setCurrent(index);
-                }}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  index === current
-                    ? 'w-8 bg-gold-500'
-                    : 'w-1.5 bg-forest-200 hover:bg-forest-300'
-                }`}
-                aria-label={`Go to testimonial ${index + 1}`}
-              />
-            ))}
-          </div>
+          {testimonials.length > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setDirection(index > current ? 1 : -1);
+                    setCurrent(index);
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-500 ${
+                    index === current
+                      ? 'w-8 bg-gold-500'
+                      : 'w-1.5 bg-forest-200 hover:bg-forest-300'
+                  }`}
+                  aria-label={`Go to testimonial ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

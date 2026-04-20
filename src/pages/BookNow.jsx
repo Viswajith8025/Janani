@@ -21,8 +21,7 @@ import {
 } from 'lucide-react';
 import { FadeIn, ScaleIn } from '../components/AnimatedText';
 import { experiences } from '../data/experiences';
-import emailjs from '@emailjs/browser';
-import { EMAILJS_CONFIG } from '../config/emailjs';
+import { apiFetch } from '../config/api';
 
 const packages = [
   {
@@ -120,11 +119,13 @@ const BookNow = () => {
   const [countryCode, setCountryCode] = useState('+1');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [bookingRef, setBookingRef] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [showExperiences, setShowExperiences] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const [sendError, setSendError] = useState('');
-  const [formData, setFormData] = useState({
+  const [isSending, setIsSending]   = useState(false);
+  const [isPaying, setIsPaying]     = useState(false);
+  const [sendError, setSendError]   = useState('');
+  const [formData, setFormData]     = useState({
     firstName: '',
     lastName: '',
     email: '',
@@ -154,30 +155,86 @@ const BookNow = () => {
     setSendError('');
 
     try {
-      if (EMAILJS_CONFIG.publicKey !== 'YOUR_PUBLIC_KEY') {
-        await emailjs.send(
-          EMAILJS_CONFIG.serviceId,
-          EMAILJS_CONFIG.bookingTemplateId,
-          {
-            from_name: `${formData.firstName} ${formData.lastName}`,
-            from_email: formData.email,
-            phone: `${countryCode} ${formData.phone}`,
-            package_name: selectedPkg?.name,
-            package_duration: selectedPkg?.duration,
-            guests: guests,
-            total_price: `$${totalPrice.toLocaleString('en-US')} USD`,
-            check_in: formData.checkIn,
-            check_out: formData.checkOut,
-            special_requests: formData.specialRequests || 'None',
+      // 1. Create Booking
+      const bookingRes = await apiFetch('/booking', {
+        method: 'POST',
+        body: JSON.stringify({
+          firstName:       formData.firstName,
+          lastName:        formData.lastName,
+          email:           formData.email,
+          countryCode,
+          phone:           formData.phone,
+          checkIn:         formData.checkIn  || undefined,
+          checkOut:        formData.checkOut || undefined,
+          packageId:       selectedPackage,
+          packageName:     selectedPkg?.name,
+          totalGuests:     { adults: guests },
+          specialRequests: formData.specialRequests || '',
+          source:          'website',
+        }),
+      });
+
+      const ref = bookingRes.data?.bookingRef;
+      setBookingRef(ref);
+
+      // 2. Create Razorpay Order
+      setIsPaying(true);
+      const orderRes = await apiFetch('/payment/order', {
+        method: 'POST',
+        body: JSON.stringify({
+          bookingRef: ref,
+          email:      formData.email,
+        }),
+      });
+
+      const options = {
+        key:         orderRes.data.keyId,
+        amount:      orderRes.data.amount,
+        currency:    orderRes.data.currency,
+        name:        'Janani Lifestyle',
+        description: orderRes.data.description,
+        order_id:    orderRes.data.orderId,
+        prefill:     orderRes.data.prefill,
+        theme: {
+          color: '#1f321e', // Janani forest green
+        },
+        handler: async (response) => {
+          try {
+            setIsPaying(true);
+            await apiFetch('/payment/verify', {
+              method: 'POST',
+              body: JSON.stringify({
+                razorpayOrderId:   response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                paymentId:         orderRes.data.paymentId,
+              }),
+            });
+            setIsSubmitted(true);
+          } catch (err) {
+            setSendError('Payment verification failed. Please contact us with your reference.');
+          } finally {
+            setIsPaying(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsPaying(false);
+            setSendError('Payment was cancelled. You can retry from your email link later.');
           },
-          EMAILJS_CONFIG.publicKey
-        );
-      }
-      setIsSubmitted(true);
-    } catch (error) {
-      setSendError('Something went wrong. Please try again or contact us via WhatsApp.');
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (err) {
+      setSendError(
+        err.message || 'Something went wrong. Please try again or contact us via WhatsApp.'
+      );
     } finally {
       setIsSending(false);
+      setIsPaying(false);
     }
   };
 
@@ -201,10 +258,17 @@ const BookNow = () => {
                 >
                   <Check className="w-8 h-8 text-gold-500" />
                 </motion.div>
-                <h2 className="font-serif text-3xl mb-4">Request Sent</h2>
+                <h2 className="font-serif text-3xl mb-4">Retreat Confirmed</h2>
+                {bookingRef && (
+                  <div className="mb-4 px-4 py-3 bg-white/10 rounded">
+                    <p className="text-white/50 text-[10px] uppercase tracking-widest mb-1">Your Booking Reference</p>
+                    <p className="font-mono text-gold-400 text-lg font-bold tracking-widest">{bookingRef}</p>
+                    <p className="text-white/40 text-[10px] mt-1">Save this — you can use it to look up or cancel your booking.</p>
+                  </div>
+                )}
                 <p className="text-white/70 text-sm leading-relaxed mb-8">
-                  Your wellness journey with Janani has officially begun. Our retreat coordinator 
-                  will review your request and contact you within 24 hours.
+                  Your wellness journey with Janani has officially begun. Your payment was successful
+                  and your reservation is now confirmed. We can't wait to welcome you.
                 </p>
               </div>
               <div className="space-y-4">
@@ -247,7 +311,7 @@ const BookNow = () => {
                 <div className="flex flex-col gap-4 pt-4">
                    <Magnetic strength={0.2}>
                       <a
-                        href={`https://wa.me/919645558593?text=Hi! I just submitted a booking request for the ${selectedPkg?.name} package.`}
+                        href={`https://wa.me/919645558593?text=Hi!%20I%20just%20submitted%20a%20booking%20request%20for%20the%20${encodeURIComponent(selectedPkg?.name || '')}%20package.%20My%20reference%20is%20${encodeURIComponent(bookingRef)}.`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full flex items-center justify-center gap-2 py-4 bg-forest-800 text-white text-sm font-medium tracking-widest uppercase hover:bg-forest-900 transition-colors"
@@ -757,7 +821,7 @@ const BookNow = () => {
                         </div>
                         <div className="flex items-center gap-1.5">
                           <CreditCard className="w-3.5 h-3.5" />
-                          <span>No payment now</span>
+                          <span>Secure Payment</span>
                         </div>
                       </div>
 
@@ -778,13 +842,13 @@ const BookNow = () => {
                           whileTap={{ scale: isSending ? 1 : 0.98 }}
                         >
                           <span className="flex items-center justify-center gap-2">
-                            {isSending ? (
+                            {isSending || isPaying ? (
                               <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                Sending...
+                                {isPaying ? 'Processing Payment...' : 'Creating Booking...'}
                               </>
                             ) : (
-                              'Confirm Booking Request'
+                              'Confirm & Pay'
                             )}
                           </span>
                         </motion.button>

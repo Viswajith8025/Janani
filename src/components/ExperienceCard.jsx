@@ -1,9 +1,21 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { FadeIn } from './AnimatedText';
+import * as Icons from 'lucide-react';
+
+const iconMap = {
+  Leaf: Icons.Leaf,
+  Heart: Icons.Heart,
+  Sun: Icons.Sun,
+  Mountain: Icons.Mountain,
+  Flame: Icons.Flame,
+  Droplets: Icons.Droplets,
+  Wind: Icons.Wind,
+  Moon: Icons.Moon,
+  Sparkles: Icons.Sparkles
+};
 
 const ExperienceCard = ({ experience, index, onClick }) => {
-  const Icon = experience.icon;
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -14,6 +26,13 @@ const ExperienceCard = ({ experience, index, onClick }) => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Resolve icon component
+  const getIcon = () => {
+    if (typeof experience.icon === 'function') return experience.icon;
+    return iconMap[experience.icon] || Icons.Sparkles;
+  };
+  const Icon = getIcon();
 
   return (
     <FadeIn delay={index * 0.08} direction="up">
@@ -68,3 +87,4 @@ const ExperienceCard = ({ experience, index, onClick }) => {
 };
 
 export default ExperienceCard;
+

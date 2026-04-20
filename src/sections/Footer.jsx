@@ -200,13 +200,39 @@ const Footer = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.5 }}
         >
-          <p className="text-white/30 text-xs md:text-sm text-center md:text-left"
-          >
+          <p className="text-white/30 text-xs md:text-sm text-center md:text-left">
             © {currentYear} Janani Lifestyle. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-4 md:gap-8"
-          >
+          {/* Credit Line — centered, subtle, premium */}
+          <p className="text-white/20 text-[10px] tracking-[0.2em] uppercase font-light text-center order-last md:order-none">
+            Handcrafted by{' '}
+            <a
+              href="https://karthik-portfolio.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative inline-block text-white/35 transition-colors duration-500 hover:text-gold-400
+                         after:content-[''] after:absolute after:bottom-0 after:left-0
+                         after:w-0 after:h-px after:bg-gold-500/60
+                         after:transition-all after:duration-500 hover:after:w-full"
+            >
+              Karthik
+            </a>
+            {' '}&amp;{' '}
+            <a
+              href="https://viswajith-ten.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative inline-block text-white/35 transition-colors duration-500 hover:text-gold-400
+                         after:content-[''] after:absolute after:bottom-0 after:left-0
+                         after:w-0 after:h-px after:bg-gold-500/60
+                         after:transition-all after:duration-500 hover:after:w-full"
+            >
+              Viswajith
+            </a>
+          </p>
+
+          <div className="flex items-center gap-4 md:gap-8">
             <a
               href="#"
               className="text-white/30 hover:text-white text-xs md:text-sm transition-colors"
@@ -219,19 +245,19 @@ const Footer = () => {
             >
               Terms of Service
             </a>
-          </div>
 
-          {/* Back to Top */}
-          <motion.button
-            onClick={scrollToTop}
-            className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border border-white/10 flex items-center justify-center
-                     hover:bg-white/10 hover:border-white/20 transition-all duration-300 group"
-            aria-label="Back to top"
-            whileHover={{ y: -3 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowUp className="w-4 h-4 md:w-5 md:h-5 text-white/50 group-hover:text-white transition-colors" />
-          </motion.button>
+            {/* Back to Top */}
+            <motion.button
+              onClick={scrollToTop}
+              className="w-10 h-10 md:w-12 md:h-12 bg-white/5 border border-white/10 flex items-center justify-center
+                       hover:bg-white/10 hover:border-white/20 transition-all duration-300 group"
+              aria-label="Back to top"
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowUp className="w-4 h-4 md:w-5 md:h-5 text-white/50 group-hover:text-white transition-colors" />
+            </motion.button>
+          </div>
         </motion.div>
       </div>
     </footer>

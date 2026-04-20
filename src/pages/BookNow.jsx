@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -18,8 +18,13 @@ import {
   X,
   Loader2,
   MessageCircle,
+  UploadCloud,
+  FileText,
+  Trash2,
 } from 'lucide-react';
 import { FadeIn, ScaleIn } from '../components/AnimatedText';
+import Magnetic from '../components/Magnetic';
+
 import { experiences } from '../data/experiences';
 import emailjs from '@emailjs/browser';
 import { EMAILJS_CONFIG } from '../config/emailjs';
@@ -113,6 +118,14 @@ const countryCodes = [
   { code: '+41', country: 'CH', flag: '🇨🇭' },
 ];
 
+const ID_TYPES = [
+  { value: 'aadhaar', label: 'Aadhaar Card' },
+  { value: 'driving', label: 'Driving Licence' },
+  { value: 'voter', label: "Voter's ID" },
+  { value: 'passport', label: 'Passport' },
+  { value: 'pan', label: 'PAN Card' },
+];
+
 const BookNow = () => {
   const [selectedPackage, setSelectedPackage] = useState('harmony');
   const [guests, setGuests] = useState(1);
@@ -124,6 +137,12 @@ const BookNow = () => {
   const [showExperiences, setShowExperiences] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState('');
+  // ID proof state
+  const [idType, setIdType] = useState('aadhaar');
+  const [idFile, setIdFile] = useState(null);
+  const [idPreview, setIdPreview] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -148,13 +167,70 @@ const BookNow = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // ── ID File handlers ──────────────────────────────────────────────────────
+  const handleFileSelect = (file) => {
+    if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowed.includes(file.type)) {
+      setSendError('Invalid file type. Use JPG, PNG, WebP, or PDF.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSendError('File is too large. Maximum size is 5 MB.');
+      return;
+    }
+    setSendError('');
+    setIdFile(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => setIdPreview(e.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setIdPreview('pdf');
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFileSelect(e.dataTransfer.files[0]);
+  };
+
+  const removeFile = () => {
+    setIdFile(null);
+    setIdPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSending(true);
     setSendError('');
 
     try {
-      if (EMAILJS_CONFIG.publicKey !== 'YOUR_PUBLIC_KEY') {
+      // 1. Validate ID proof presence
+      if (!idFile) {
+        throw new Error('Please upload a valid ID proof to proceed with your booking.');
+      }
+
+      // 2. Upload ID proof
+      const uploadData = new FormData();
+      uploadData.append('idProof', idFile);
+      uploadData.append('idType', idType);
+      uploadData.append('guestName', `${formData.firstName} ${formData.lastName}`);
+
+      const uploadRes = await fetch('/api/upload-id', {
+        method: 'POST',
+        body: uploadData,
+      });
+      const uploadJson = await uploadRes.json();
+      if (!uploadJson.success) {
+        throw new Error(uploadJson.message || 'ID upload failed.');
+      }
+
+      // 3. Send booking email via EmailJS
+      if (EMAILJS_CONFIG.publicKey !== 'REPLACE_WITH_YOUR_EMAILJS_PUBLIC_KEY') {
         await emailjs.send(
           EMAILJS_CONFIG.serviceId,
           EMAILJS_CONFIG.bookingTemplateId,
@@ -169,13 +245,14 @@ const BookNow = () => {
             check_in: formData.checkIn,
             check_out: formData.checkOut,
             special_requests: formData.specialRequests || 'None',
+            id_type: ID_TYPES.find(t => t.value === idType)?.label || idType,
           },
           EMAILJS_CONFIG.publicKey
         );
       }
       setIsSubmitted(true);
     } catch (error) {
-      setSendError('Something went wrong. Please try again or contact us via WhatsApp.');
+      setSendError(error.message || 'Something went wrong. Please try again or contact us via WhatsApp.');
     } finally {
       setIsSending(false);
     }
@@ -743,6 +820,111 @@ const BookNow = () => {
                           className="input-premium text-sm resize-none"
                           placeholder="Any allergies, dietary preferences, mobility needs, or special occasions..."
                         />
+                      </div>
+
+                      {/* ── ID Proof Upload ──────────────────────────────── */}
+                      <div>
+                        <label className="block text-forest-700 text-xs font-medium tracking-wider uppercase mb-2">
+                          <Shield className="w-3.5 h-3.5 inline mr-1.5" />
+                          Government ID Proof *
+                        </label>
+
+                        {/* ID Type Selector */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {ID_TYPES.map((t) => (
+                            <button
+                              key={t.value}
+                              type="button"
+                              onClick={() => setIdType(t.value)}
+                              className={`px-3 py-1.5 text-xs font-medium border transition-all duration-300 ${
+                                idType === t.value
+                                  ? 'bg-forest-700 text-white border-forest-700'
+                                  : 'bg-transparent text-forest-600 border-forest-300 hover:border-forest-500'
+                              }`}
+                            >
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Drop Zone / Preview */}
+                        <AnimatePresence mode="wait">
+                          {!idFile ? (
+                            <motion.div
+                              key="dropzone"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                              onDragLeave={() => setIsDragging(false)}
+                              onDrop={handleDrop}
+                              onClick={() => fileInputRef.current?.click()}
+                              className={`relative flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed
+                                cursor-pointer transition-all duration-300 group
+                                ${
+                                  isDragging
+                                    ? 'border-forest-500 bg-forest-50'
+                                    : 'border-earth-300 hover:border-forest-400 hover:bg-earth-50'
+                                }`}
+                            >
+                              <UploadCloud className={`w-7 h-7 transition-colors duration-300 ${
+                                isDragging ? 'text-forest-600' : 'text-forest-400 group-hover:text-forest-600'
+                              }`} />
+                              <p className="text-forest-600 text-sm font-medium">
+                                {isDragging ? 'Drop your file here' : 'Drag & drop or click to upload'}
+                              </p>
+                              <p className="text-forest-400 text-xs">
+                                JPG, PNG, WebP, PDF · Max 5 MB
+                              </p>
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,application/pdf"
+                                onChange={(e) => handleFileSelect(e.target.files[0])}
+                                className="hidden"
+                              />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="preview"
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -8 }}
+                              className="flex items-center gap-4 p-4 bg-forest-50 border border-forest-200"
+                            >
+                              {/* Thumbnail or PDF icon */}
+                              <div className="w-14 h-14 shrink-0 overflow-hidden bg-earth-100 flex items-center justify-center">
+                                {idPreview === 'pdf' ? (
+                                  <FileText className="w-7 h-7 text-forest-500" />
+                                ) : (
+                                  <img src={idPreview} alt="ID preview" className="w-full h-full object-cover" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-forest-800 text-sm font-medium truncate">{idFile.name}</p>
+                                <p className="text-forest-500 text-xs mt-0.5">
+                                  {ID_TYPES.find(t => t.value === idType)?.label} · {(idFile.size / 1024).toFixed(0)} KB
+                                </p>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                                  <span className="text-green-700 text-xs">Ready to upload</span>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={removeFile}
+                                className="shrink-0 w-8 h-8 flex items-center justify-center text-forest-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                aria-label="Remove file"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        <p className="text-forest-400 text-xs mt-2 leading-relaxed">
+                          Your ID is encrypted and stored securely. It is only used for identity verification purposes.
+                        </p>
                       </div>
 
                       {/* Trust Signals */}

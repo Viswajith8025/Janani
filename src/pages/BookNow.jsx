@@ -143,6 +143,7 @@ const BookNow = () => {
   const [idFile, setIdFile] = useState(null);
   const [idPreview, setIdPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -205,7 +206,7 @@ const BookNow = () => {
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsSending(true);
     setSendError('');
 
@@ -502,6 +503,7 @@ const BookNow = () => {
               {[
                 { num: 1, label: 'Choose Package' },
                 { num: 2, label: 'Guest Details' },
+                { num: 3, label: 'Review & Terms' },
               ].map((s, i) => (
                 <div key={s.num} className="flex items-center gap-4">
                   <button
@@ -525,9 +527,9 @@ const BookNow = () => {
                       {s.label}
                     </span>
                   </button>
-                  {i === 0 && (
-                    <div className={`w-12 sm:w-20 h-px transition-all duration-500 ${
-                      step > 1 ? 'bg-forest-700' : 'bg-earth-300'
+                  {i < 2 && (
+                    <div className={`w-8 sm:w-16 h-px transition-all duration-500 ${
+                      step > i + 1 ? 'bg-forest-700' : 'bg-earth-300'
                     }`} />
                   )}
                 </div>
@@ -985,6 +987,9 @@ const BookNow = () => {
                         </div>
                       </div>
 
+
+
+
                       <div className="flex gap-4 pt-4">
                         <button
                           type="button"
@@ -994,28 +999,17 @@ const BookNow = () => {
                         >
                           <span>Back</span>
                         </button>
-                        <motion.button
-                          type="submit"
-                          disabled={isSending}
-                          className={`btn-premium flex-1 group ${isSending ? 'opacity-70 cursor-not-allowed' : ''}`}
-                          whileHover={{ scale: isMobile || isSending ? 1 : 1.02 }}
-                          whileTap={{ scale: isSending ? 1 : 0.98 }}
+                        <button
+                          type="button"
+                          onClick={() => setStep(3)}
+                          className="btn-premium flex-1 group"
                         >
                           <span className="flex items-center justify-center gap-2">
-                            {isSending || isPaying ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                {isPaying ? 'Processing Payment...' : 'Creating Booking...'}
-                              </>
-                            ) : (
-                              'Confirm & Pay'
-                            )}
+                            Review & Confirm
+                            <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
                           </span>
-                        </motion.button>
+                        </button>
                       </div>
-                      {sendError && (
-                        <p className="text-red-500 text-xs text-center mt-3">{sendError}</p>
-                      )}
                     </form>
                   </div>
                 </div>
@@ -1077,6 +1071,144 @@ const BookNow = () => {
                         Visa assistance available upon request.
                       </p>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white p-6 md:p-10 shadow-elegant">
+                  <h2 className="font-serif text-2xl text-forest-900 mb-6">Review & Terms</h2>
+                  
+                  {/* Summary for Review */}
+                  <div className="grid md:grid-cols-2 gap-8 mb-10 pb-10 border-b border-earth-100">
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-forest-500">Booking Summary</h3>
+                      <div className="space-y-2">
+                        <p className="flex justify-between text-sm text-forest-700">
+                          <span>Package:</span>
+                          <span className="font-medium">{selectedPkg?.name}</span>
+                        </p>
+                        <p className="flex justify-between text-sm text-forest-700">
+                          <span>Guests:</span>
+                          <span className="font-medium">{guests}</span>
+                        </p>
+                        <p className="flex justify-between text-sm text-forest-700">
+                          <span>Check-in:</span>
+                          <span className="font-medium">{formData.checkIn || 'To be confirmed'}</span>
+                        </p>
+                        <p className="flex justify-between text-sm text-forest-700">
+                          <span>Check-out:</span>
+                          <span className="font-medium">{formData.checkOut || 'To be confirmed'}</span>
+                        </p>
+                        <div className="pt-2 mt-2 border-t border-earth-100 flex justify-between text-lg text-forest-900 font-serif">
+                          <span>Total Amount:</span>
+                          <span>${totalPrice.toLocaleString('en-US')} USD</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-forest-500">Personal Details</h3>
+                      <div className="space-y-2">
+                        <p className="text-sm text-forest-700">
+                          <span className="text-forest-400">Name:</span> {formData.firstName} {formData.lastName}
+                        </p>
+                        <p className="text-sm text-forest-700">
+                          <span className="text-forest-400">Email:</span> {formData.email}
+                        </p>
+                        <p className="text-sm text-forest-700">
+                          <span className="text-forest-400">Phone:</span> {countryCode} {formData.phone}
+                        </p>
+                        {idFile && (
+                          <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 p-2 mt-2">
+                            <Check className="w-3.5 h-3.5" />
+                            ID Proof Uploaded: {idFile.name}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Terms and Conditions */}
+                  <div className="space-y-6">
+                    <div className="bg-earth-50/50 p-6 md:p-8 border border-earth-200 rounded-lg space-y-6">
+                      <div className="space-y-4 text-sm text-forest-700 leading-relaxed text-justify italic font-light">
+                        <p>
+                          For the safety, comfort, and wellbeing of all guests, the use or possession of illegal drugs, 
+                          narcotics, or prohibited substances is strictly forbidden anywhere on the resort premises. 
+                          Management reserves the right to conduct security inspections or screenings whenever necessary. 
+                          Any violation of this policy may result in immediate removal from the property without refund, 
+                          and legal authorities may be informed if required.
+                        </p>
+                        <p>
+                          Our resort is committed to maintaining a peaceful, respectful, and family-friendly environment. 
+                          Guests are expected to behave responsibly and comply with all resort rules and local laws. 
+                          Any form of violence, harassment, vandalism, disruptive behavior, or unlawful activity will 
+                          not be tolerated and may lead to denied access, removal from the property, or further action 
+                          as deemed necessary by management.
+                        </p>
+                      </div>
+                      
+                      <div className="pt-4 border-t border-earth-200">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                          <div className="relative flex items-center pt-0.5">
+                            <input
+                              type="checkbox"
+                              checked={acceptedTerms}
+                              onChange={(e) => setAcceptedTerms(e.target.checked)}
+                              className="peer h-6 w-6 cursor-pointer appearance-none rounded border-2 border-forest-300 transition-all checked:bg-forest-700 checked:border-forest-700 hover:border-forest-500"
+                            />
+                            <Check className="absolute h-4 w-4 text-white opacity-0 transition-opacity peer-checked:opacity-100 left-1" strokeWidth={4} />
+                          </div>
+                          <span className="text-sm font-medium text-forest-900 select-none pt-0.5">
+                            I have read, understood, and I agree to the terms and conditions above. I confirm that all information provided is accurate. *
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setStep(2)}
+                        disabled={isSending}
+                        className="btn-outline-premium px-8"
+                      >
+                        <span>Back to Details</span>
+                      </button>
+                      <motion.button
+                        onClick={handleSubmit}
+                        disabled={isSending || !acceptedTerms}
+                        className={`btn-premium flex-1 group ${isSending || !acceptedTerms ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        whileHover={{ scale: isMobile || isSending || !acceptedTerms ? 1 : 1.02 }}
+                        whileTap={{ scale: isSending || !acceptedTerms ? 1 : 0.98 }}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          {isSending || isPaying ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              {isPaying ? 'Processing Payment...' : 'Creating Booking...'}
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="w-4 h-4" />
+                              Confirm & Pay ${totalPrice.toLocaleString('en-US')}
+                            </>
+                          )}
+                        </span>
+                      </motion.button>
+                    </div>
+                    {sendError && (
+                      <p className="text-red-500 text-xs text-center mt-3 bg-red-50 py-2 border border-red-100">{sendError}</p>
+                    )}
                   </div>
                 </div>
               </div>

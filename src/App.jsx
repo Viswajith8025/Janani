@@ -15,7 +15,10 @@ import Footer from './sections/Footer'
 import BookNow from './pages/BookNow'
 import Team from './pages/Team'
 import Blog from './pages/Blog'
+import Shop from './pages/Shop'
 import NotFound from './pages/NotFound'
+
+import AdminDashboard from './pages/admin/AdminDashboard'
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -58,6 +61,8 @@ function App() {
           <Route path="/book" element={<BookNow />} />
           <Route path="/team" element={<Team />} />
           <Route path="/stories" element={<Blog />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />

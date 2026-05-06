@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ExperienceCard from '../components/ExperienceCard';
 import { experiences as staticExperiences } from '../data/experiences';
 import { FadeIn, StaggerContainer, StaggerItem } from '../components/AnimatedText';
@@ -13,8 +13,13 @@ const Experiences = () => {
   const [selectedExp, setSelectedExp] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [experiences, setExperiences] = useState(staticExperiences);
+  const navigate = useNavigate();
 
   const handleOpenModal = (exp) => {
+    if (exp.title === 'Business Centre') {
+      navigate('/shop');
+      return;
+    }
     setSelectedExp(exp);
     setIsModalOpen(true);
   };

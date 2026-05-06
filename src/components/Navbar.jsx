@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { navLinks } from '../data/experiences';
 import Magnetic from './Magnetic';
 
@@ -10,8 +10,35 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [isMobile, setIsMobile] = useState(false);
+  const [logoClickCount, setLogoClickCount] = useState(0);
+  const [clickTimer, setClickTimer] = useState(null);
+  
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
+
+  const handleLogoClick = (e) => {
+    // If it's a mobile device, we might want to handle it differently 
+    // but the request just says "5 times a row"
+    setLogoClickCount(prev => {
+      const newCount = prev + 1;
+      
+      if (newCount === 5) {
+        navigate('/admin');
+        return 0;
+      }
+      
+      // Reset timer on each click
+      if (clickTimer) clearTimeout(clickTimer);
+      
+      const timer = setTimeout(() => {
+        setLogoClickCount(0);
+      }, 5000); // 5 seconds window to complete 5 clicks
+      
+      setClickTimer(timer);
+      return newCount;
+    });
+  };
 
   useEffect(() => {
     const checkMobile = () => {
@@ -95,6 +122,7 @@ const Navbar = () => {
                 <Link
                   to="/"
                   className="flex items-center gap-2 md:gap-3 group"
+                  onClick={handleLogoClick}
                 >
                   <img
                     src="/assets/logo.png"
@@ -122,7 +150,7 @@ const Navbar = () => {
             </Magnetic>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-8 relative">
               {navLinks.map((link) => {
                 const isActive = link.type === 'hash' 
                   ? activeSection === link.href.replace('#', '')

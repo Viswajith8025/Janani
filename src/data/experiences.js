@@ -147,4 +147,5 @@ export const navLinks = [
   { name: 'Contact', href: '#contact', type: 'hash' },
   { name: 'Team', href: '/team', type: 'route' },
   { name: 'Stories', href: '/stories', type: 'route' },
+  { name: 'Shop', href: '/shop', type: 'route' },
 ];

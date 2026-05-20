@@ -17,33 +17,37 @@ import Team from './pages/Team'
 import Blog from './pages/Blog'
 import Shop from './pages/Shop'
 import NotFound from './pages/NotFound'
-
+import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   useEffect(() => {
-    // Smooth scroll polyfill for Safari
     document.documentElement.style.scrollBehavior = 'smooth';
-
-    return () => {
-      document.documentElement.style.scrollBehavior = 'auto';
-    };
+    return () => { document.documentElement.style.scrollBehavior = 'auto'; };
   }, []);
 
-  // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
+  // Admin pages — skip page loader, navbar, footer
+  if (isAdminPage) {
+    return (
+      <Routes>
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      </Routes>
+    );
+  }
+
   return (
     <>
       <PageLoader onComplete={() => setIsLoaded(true)} />
-
       {isLoaded && <ScrollProgress />}
-
       <div className={`min-h-screen bg-earth-50 overflow-x-hidden transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
         <Navbar />
         <Routes>

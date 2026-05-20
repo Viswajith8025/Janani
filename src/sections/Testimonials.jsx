@@ -18,7 +18,7 @@ const Testimonials = () => {
     
     const fetchTestimonials = async () => {
       try {
-        const res = await apiFetch('/testimonial');
+        const res = await apiFetch('/testimonials');
         if (res.data && res.data.length > 0) {
           setTestimonials(res.data);
         }

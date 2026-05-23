@@ -7,7 +7,7 @@ import { apiFetch } from '../config/api';
 
 const Gallery = () => {
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [galleryImages, setGalleryImages] = useState(staticGalleryImages);
 
   useEffect(() => {

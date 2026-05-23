@@ -6,7 +6,7 @@ import { FadeIn, StaggerContainer, StaggerItem } from '../components/AnimatedTex
 
 const RetreatFeatures = () => {
   const containerRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,

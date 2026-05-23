@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { apiFetch } from '../../config/api';
 import { 
   Users, 
   CreditCard, 
@@ -19,30 +20,51 @@ import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [bookings, setBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await apiFetch('/bookings');
+        setBookings(res.data || []);
+      } catch (error) {
+        console.error('Failed to fetch bookings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchBookings();
+  }, []);
+
+  // Compute stats from real data
+  const totalRevenue = bookings
+    .filter(b => b.status === 'confirmed')
+    .reduce((sum, b) => {
+      const pkgPrice = b.packageId === 'serenity' ? 899 : b.packageId === 'transformation' ? 1899 : 1399;
+      return sum + (pkgPrice * (b.totalGuests?.adults || 1) * 83);
+    }, 0);
+    
+  const pendingPayments = bookings
+    .filter(b => b.status === 'pending_payment')
+    .reduce((sum, b) => {
+      const pkgPrice = b.packageId === 'serenity' ? 899 : b.packageId === 'transformation' ? 1899 : 1399;
+      return sum + (pkgPrice * (b.totalGuests?.adults || 1) * 83);
+    }, 0);
 
   // Mock Stats Data
   const stats = [
-    { label: 'Total Revenue', value: '₹12,45,000', icon: TrendingUp, color: 'text-gold-600', bg: 'bg-gold-50' },
-    { label: 'Total Bookings', value: '148', icon: Calendar, color: 'text-forest-600', bg: 'bg-forest-50' },
-    { label: 'Active Guests', value: '24', icon: Users, color: 'text-sage-600', bg: 'bg-sage-50' },
-    { label: 'Pending Payments', value: '₹84,200', icon: CreditCard, color: 'text-earth-600', bg: 'bg-earth-100' },
-  ];
-
-  // Mock Booking Data
-  const bookings = [
-    { id: 'BK-1082', guest: 'Aditi Sharma', retreat: 'Mud Houses Stay', date: '2024-05-12', status: 'Confirmed', amount: '₹18,500', payment: 'Paid' },
-    { id: 'BK-1083', guest: 'Rahul Verma', retreat: 'Ayurvedic Therapy', date: '2024-05-14', status: 'Pending', amount: '₹12,200', payment: 'Partial' },
-    { id: 'BK-1084', guest: 'Elena Gilbert', retreat: 'Yoga & Meditation', date: '2024-05-15', status: 'Confirmed', amount: '₹25,000', payment: 'Paid' },
-    { id: 'BK-1085', guest: 'Vikram Singh', retreat: 'Kalari Intensive', date: '2024-05-18', status: 'In Progress', amount: '₹45,000', payment: 'Paid' },
-    { id: 'BK-1086', guest: 'Priya Iyer', retreat: 'Detox & Mud Bath', date: '2024-05-20', status: 'Pending', amount: '₹8,500', payment: 'Unpaid' },
-    { id: 'BK-1087', guest: 'David Miller', retreat: 'Spiritual Retreat', date: '2024-05-22', status: 'Confirmed', amount: '₹32,000', payment: 'Paid' },
+    { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString('en-IN')}`, icon: TrendingUp, color: 'text-gold-600', bg: 'bg-gold-50' },
+    { label: 'Total Bookings', value: bookings.length.toString(), icon: Calendar, color: 'text-forest-600', bg: 'bg-forest-50' },
+    { label: 'Active Guests', value: bookings.reduce((sum, b) => sum + (b.totalGuests?.adults || 1), 0).toString(), icon: Users, color: 'text-sage-600', bg: 'bg-sage-50' },
+    { label: 'Pending Payments', value: `₹${pendingPayments.toLocaleString('en-IN')}`, icon: CreditCard, color: 'text-earth-600', bg: 'bg-earth-100' },
   ];
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case 'Confirmed': return 'bg-forest-100 text-forest-800';
-      case 'Pending': return 'bg-earth-100 text-earth-800';
-      case 'In Progress': return 'bg-gold-100 text-gold-800';
+      case 'confirmed': return 'bg-forest-100 text-forest-800';
+      case 'pending_payment': return 'bg-earth-100 text-earth-800';
+      case 'in_progress': return 'bg-gold-100 text-gold-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -127,44 +149,56 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-forest-50">
-                {bookings.map((booking) => (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="8" className="px-6 py-8 text-center text-forest-500">
+                      Loading bookings...
+                    </td>
+                  </tr>
+                ) : bookings.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="px-6 py-8 text-center text-forest-500">
+                      No bookings found.
+                    </td>
+                  </tr>
+                ) : bookings.filter(b => b.bookingRef.toLowerCase().includes(searchTerm.toLowerCase()) || `${b.firstName} ${b.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())).map((booking) => (
                   <tr key={booking.id} className="hover:bg-earth-50/30 transition-colors group">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-mono text-forest-600">{booking.id}</span>
+                      <span className="text-sm font-mono text-forest-600">{booking.bookingRef}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-sage-100 flex items-center justify-center text-sage-700 font-bold text-xs">
-                          {booking.guest.charAt(0)}
+                          {booking.firstName.charAt(0)}
                         </div>
-                        <span className="text-sm font-medium text-forest-900">{booking.guest}</span>
+                        <span className="text-sm font-medium text-forest-900">{booking.firstName} {booking.lastName}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-forest-600">
-                      {booking.retreat}
+                      {booking.packageName || booking.packageId}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-forest-600">
-                      {booking.date}
+                      {booking.checkIn || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(booking.status)}`}>
-                        {booking.status}
+                        {booking.status.replace('_', ' ')}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        {booking.payment === 'Paid' ? (
+                        {booking.status === 'confirmed' ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        ) : booking.payment === 'Partial' ? (
-                          <Clock className="w-4 h-4 text-amber-500" />
                         ) : (
-                          <AlertCircle className="w-4 h-4 text-rose-500" />
+                          <AlertCircle className="w-4 h-4 text-amber-500" />
                         )}
-                        <span className="text-sm text-forest-700 font-medium">{booking.payment}</span>
+                        <span className="text-sm text-forest-700 font-medium">
+                          {booking.status === 'confirmed' ? 'Paid' : 'Pending'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-forest-900">
-                      {booking.amount}
+                      ${((booking.packageId === 'serenity' ? 899 : booking.packageId === 'transformation' ? 1899 : 1399) * (booking.totalGuests?.adults || 1)).toLocaleString('en-US')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-forest-400 group-hover:text-forest-600">
                       <button className="p-1 rounded-lg hover:bg-forest-50">

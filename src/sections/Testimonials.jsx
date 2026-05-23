@@ -8,7 +8,7 @@ import { apiFetch } from '../config/api';
 const Testimonials = () => {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [testimonials, setTestimonials] = useState(staticTestimonials);
 
   useEffect(() => {

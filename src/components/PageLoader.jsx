@@ -27,6 +27,7 @@ const PageLoader = ({ onComplete }) => {
     <AnimatePresence>
       {isLoading && (
         <motion.div
+          key="page-loader"
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-forest-950"
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
@@ -34,12 +35,12 @@ const PageLoader = ({ onComplete }) => {
           {/* Background ambient glow */}
           <div className="absolute inset-0 overflow-hidden">
             <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-forest-800/40 blur-[120px]"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full bg-forest-800/40 blur-[60px] md:blur-[100px]"
               animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
             />
             <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-gold-600/20 blur-[100px]"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] h-[200px] md:w-[400px] md:h-[400px] rounded-full bg-gold-600/20 blur-[50px] md:blur-[80px]"
               animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
             />

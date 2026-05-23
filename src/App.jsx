@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar'
 import PageLoader from './components/PageLoader'
@@ -25,6 +25,10 @@ function App() {
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith('/admin');
 
+  const handleLoadComplete = useCallback(() => {
+    setIsLoaded(true);
+  }, []);
+
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
     return () => { document.documentElement.style.scrollBehavior = 'auto'; };
@@ -46,7 +50,7 @@ function App() {
 
   return (
     <>
-      <PageLoader onComplete={() => setIsLoaded(true)} />
+      <PageLoader onComplete={handleLoadComplete} />
       {isLoaded && <ScrollProgress />}
       <div className={`min-h-screen bg-earth-50 overflow-x-hidden transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
         <Navbar />

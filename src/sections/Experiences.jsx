@@ -9,7 +9,7 @@ import ExperienceModal from '../components/ExperienceModal';
 import { apiFetch } from '../config/api';
 
 const Experiences = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [selectedExp, setSelectedExp] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [experiences, setExperiences] = useState(staticExperiences);

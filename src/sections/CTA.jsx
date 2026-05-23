@@ -6,7 +6,7 @@ import { apiFetch } from '../config/api';
 import Magnetic from '../components/Magnetic';
 
 const CTA = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [formData, setFormData] = useState({
     name: '',
     email: '',

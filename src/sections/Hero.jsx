@@ -7,7 +7,7 @@ import Magnetic from '../components/Magnetic';
 
 const Hero = () => {
   const containerRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && (window.innerWidth < 768 || 'ontouchstart' in window));
 
   const { scrollYProgress } = useScroll({
     target: containerRef,

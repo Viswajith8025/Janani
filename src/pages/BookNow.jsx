@@ -133,7 +133,7 @@ const BookNow = () => {
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [bookingRef, setBookingRef] = useState('');
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const [showExperiences, setShowExperiences] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isPaying, setIsPaying] = useState(false);

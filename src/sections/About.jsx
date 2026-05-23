@@ -4,7 +4,7 @@ import { FadeIn, ScaleIn } from '../components/AnimatedText';
 
 const About = () => {
   const containerRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,

@@ -1,22 +1,22 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { FadeIn } from './AnimatedText';
-import * as Icons from 'lucide-react';
+import { Leaf, Heart, Sun, Mountain, Flame, Droplets, Wind, Moon, Sparkles } from 'lucide-react';
 
 const iconMap = {
-  Leaf: Icons.Leaf,
-  Heart: Icons.Heart,
-  Sun: Icons.Sun,
-  Mountain: Icons.Mountain,
-  Flame: Icons.Flame,
-  Droplets: Icons.Droplets,
-  Wind: Icons.Wind,
-  Moon: Icons.Moon,
-  Sparkles: Icons.Sparkles
+  Leaf,
+  Heart,
+  Sun,
+  Mountain,
+  Flame,
+  Droplets,
+  Wind,
+  Moon,
+  Sparkles
 };
 
 const ExperienceCard = ({ experience, index, onClick }) => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && (window.innerWidth < 768 || 'ontouchstart' in window));
 
   useEffect(() => {
     const checkMobile = () => {
@@ -30,7 +30,7 @@ const ExperienceCard = ({ experience, index, onClick }) => {
   // Resolve icon component
   const getIcon = () => {
     if (typeof experience.icon === 'function') return experience.icon;
-    return iconMap[experience.icon] || Icons.Sparkles;
+    return iconMap[experience.icon] || Sparkles;
   };
   const Icon = getIcon();
 

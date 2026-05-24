@@ -700,6 +700,7 @@ const BookNow = () => {
                       </div>
                     </div>
                   </div>
+                </div>
                   {sendError && (
                     <motion.div
                       className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-red-600 text-sm mt-4"

@@ -391,6 +391,13 @@ app.get('/api/v1/bookings', verifyAdmin, async (req, res, next) => {
   }
 });
 
+// ─── MOCK ENDPOINTS TO SILENCE 404 ERRORS ───────────────────────────────────
+app.get('/api/v1/experiences', (req, res) => res.json({ success: true, data: [] }));
+app.get('/api/v1/gallery', (req, res) => res.json({ success: true, data: [] }));
+app.get('/api/v1/testimonials', (req, res) => res.json({ success: true, data: [] }));
+app.get('/api/v1/team', (req, res) => res.json({ success: true, data: [] }));
+app.get('/api/v1/blog', (req, res) => res.json({ success: true, data: [] }));
+
 // ─── Error Handlers ──────────────────────────────────────────────────────────
 app.use(notFoundHandler);
 app.use(errorHandler);

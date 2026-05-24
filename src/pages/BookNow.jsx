@@ -138,6 +138,7 @@ const BookNow = () => {
   const [isSending, setIsSending] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [sendError, setSendError] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState(null); // 'success' | 'cancelled' | null
   // ID proof state
   const [idType, setIdType] = useState('aadhaar');
   const [idFile, setIdFile] = useState(null);
@@ -211,27 +212,30 @@ const BookNow = () => {
     setSendError('');
 
     try {
-      // 1. Create Booking
-      const bookingRes = await apiFetch('/booking', {
-        method: 'POST',
-        body: JSON.stringify({
-          firstName:       formData.firstName,
-          lastName:        formData.lastName,
-          email:           formData.email,
-          countryCode,
-          phone:           formData.phone,
-          checkIn:         formData.checkIn  || undefined,
-          checkOut:        formData.checkOut || undefined,
-          packageId:       selectedPackage,
-          packageName:     selectedPkg?.name,
-          totalGuests:     { adults: guests },
-          specialRequests: formData.specialRequests || '',
-          source:          'website',
-        }),
-      });
-
-      const ref = bookingRes.data?.bookingRef;
-      setBookingRef(ref);
+      let ref = bookingRef;
+      
+      // 1. Create Booking only if we don't already have a booking reference (prevent duplicate submissions)
+      if (!ref) {
+        const bookingRes = await apiFetch('/booking', {
+          method: 'POST',
+          body: JSON.stringify({
+            firstName:       formData.firstName,
+            lastName:        formData.lastName,
+            email:           formData.email,
+            countryCode,
+            phone:           formData.phone,
+            checkIn:         formData.checkIn  || undefined,
+            checkOut:        formData.checkOut || undefined,
+            packageId:       selectedPackage,
+            packageName:     selectedPkg?.name,
+            totalGuests:     { adults: guests },
+            specialRequests: formData.specialRequests || '',
+            source:          'website',
+          }),
+        });
+        ref = bookingRes.data?.bookingRef;
+        setBookingRef(ref);
+      }
 
       // 2. Try to create Razorpay Order (gracefully skip if not configured)
       try {
@@ -267,9 +271,11 @@ const BookNow = () => {
                   paymentId:         orderRes.data.paymentId,
                 }),
               });
+              setPaymentStatus('success');
               setIsSubmitted(true);
             } catch (err) {
               setSendError('Payment verification failed. Please contact us with your reference.');
+              setPaymentStatus('cancelled');
             } finally {
               setIsPaying(false);
             }
@@ -277,7 +283,8 @@ const BookNow = () => {
           modal: {
             ondismiss: () => {
               setIsPaying(false);
-              setSendError('Payment was cancelled. You can retry from your email link later.');
+              setPaymentStatus('cancelled');
+              setSendError('Payment was cancelled. Your booking is saved. You can retry payment below.');
             },
           },
         };
@@ -287,6 +294,7 @@ const BookNow = () => {
       } catch (payErr) {
         // Payment gateway not configured or unavailable — booking was still created
         console.warn('Payment step skipped:', payErr.message);
+        setPaymentStatus('success');
         setIsSubmitted(true);
       } finally {
         setIsPaying(false);
@@ -692,19 +700,45 @@ const BookNow = () => {
                       </div>
                     </div>
                   </div>
-                </div>
+                  {sendError && (
+                    <motion.div
+                      className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-red-600 text-sm mt-4"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      {sendError}
+                    </motion.div>
+                  )}
 
-                <motion.button
-                  onClick={() => setStep(2)}
-                  className="btn-premium w-full group text-base"
-                  whileHover={{ scale: isMobile ? 1 : 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <span className="flex items-center justify-center gap-2">
-                    Continue to Details
-                    <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </motion.button>
+                  <motion.button
+                    onClick={() => {
+                      if (paymentStatus === 'cancelled') {
+                        handleSubmit(); // Retry payment since bookingRef exists
+                      } else {
+                        setStep(2);
+                      }
+                    }}
+                    disabled={isSending || isPaying}
+                    className="btn-premium w-full group text-base mt-4"
+                    whileHover={{ scale: isMobile || isSending ? 1 : 1.02 }}
+                    whileTap={{ scale: isSending ? 1 : 0.98 }}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      {isSending || isPaying ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : paymentStatus === 'cancelled' ? (
+                        'Retry Payment'
+                      ) : (
+                        <>
+                          Continue to Details
+                          <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </span>
+                  </motion.button>
               </div>
             </motion.div>
           )}
@@ -1205,6 +1239,11 @@ const BookNow = () => {
                               <Loader2 className="w-4 h-4 animate-spin" />
                               {isPaying ? 'Processing Payment...' : 'Creating Booking...'}
                             </>
+                          ) : paymentStatus === 'cancelled' ? (
+                            <>
+                              <CreditCard className="w-4 h-4" />
+                              Retry Payment ${totalPrice.toLocaleString('en-US')}
+                            </>
                           ) : (
                             <>
                               <CreditCard className="w-4 h-4" />
@@ -1215,7 +1254,13 @@ const BookNow = () => {
                       </motion.button>
                     </div>
                     {sendError && (
-                      <p className="text-red-500 text-xs text-center mt-3 bg-red-50 py-2 border border-red-100">{sendError}</p>
+                      <motion.div
+                        className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-red-600 text-sm mt-4 text-center"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        {sendError}
+                      </motion.div>
                     )}
                   </div>
                 </div>

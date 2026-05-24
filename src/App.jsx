@@ -19,6 +19,7 @@ import Shop from './pages/Shop'
 import NotFound from './pages/NotFound'
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -43,7 +44,9 @@ function App() {
     return (
       <Routes>
         <Route path="/admin" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
       </Routes>
     );
   }

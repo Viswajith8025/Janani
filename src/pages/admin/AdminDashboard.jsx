@@ -23,19 +23,34 @@ const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+
   useEffect(() => {
-    const fetchBookings = async () => {
+    const fetchBookings = async (silent = false) => {
       try {
-        const res = await apiFetch('/bookings');
+        if (!silent) setIsLoading(true);
+        const res = await apiFetch(`/bookings?page=${page}&limit=10`);
         setBookings(res.data || []);
+        if (res.metadata) {
+          setTotalPages(res.metadata.totalPages);
+          setTotalRecords(res.metadata.total);
+        }
       } catch (error) {
         console.error('Failed to fetch bookings:', error);
       } finally {
-        setIsLoading(false);
+        if (!silent) setIsLoading(false);
       }
     };
+    
+    // Initial fetch
     fetchBookings();
-  }, []);
+    
+    // Auto-refresh every 30 seconds (Real-time sync)
+    const intervalId = setInterval(() => fetchBookings(true), 30000);
+    return () => clearInterval(intervalId);
+  }, [page]);
 
   // Compute stats from real data
   const totalRevenue = bookings
@@ -211,15 +226,31 @@ const AdminDashboard = () => {
             </table>
           </div>
 
-          {/* Pagination Mockup */}
+          {/* Pagination */}
           <div className="p-6 border-t border-forest-50 flex items-center justify-between">
-            <p className="text-xs text-forest-500 font-medium">Showing 1 to 6 of 148 entries</p>
+            <p className="text-xs text-forest-500 font-medium">
+              Showing page {page} of {totalPages} ({totalRecords} total entries)
+            </p>
             <div className="flex gap-2">
-              <button disabled className="px-3 py-1 border border-forest-100 rounded-md text-xs font-bold text-forest-300">Prev</button>
-              <button className="px-3 py-1 bg-forest-800 text-white rounded-md text-xs font-bold shadow-md">1</button>
-              <button className="px-3 py-1 border border-forest-100 rounded-md text-xs font-bold text-forest-600 hover:bg-forest-50">2</button>
-              <button className="px-3 py-1 border border-forest-100 rounded-md text-xs font-bold text-forest-600 hover:bg-forest-50">3</button>
-              <button className="px-3 py-1 border border-forest-100 rounded-md text-xs font-bold text-forest-600 hover:bg-forest-50">Next</button>
+              <button 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1 border border-forest-100 rounded-md text-xs font-bold text-forest-600 hover:bg-forest-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Prev
+              </button>
+              
+              <button className="px-3 py-1 bg-forest-800 text-white rounded-md text-xs font-bold shadow-md">
+                {page}
+              </button>
+              
+              <button 
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1 border border-forest-100 rounded-md text-xs font-bold text-forest-600 hover:bg-forest-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>

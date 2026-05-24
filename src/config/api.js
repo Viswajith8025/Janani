@@ -15,12 +15,24 @@ export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/a
  * @returns {Promise<{success, message, data, meta}>}
  */
 export const apiFetch = async (endpoint, options = {}) => {
+  const token = localStorage.getItem('janani_admin_token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Handle FormData where Content-Type should be automatically set by the browser
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type'];
+  }
+
   const res = await fetch(`${API_BASE}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
     ...options,
+    headers,
   });
 
   const data = await res.json();

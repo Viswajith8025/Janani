@@ -391,6 +391,53 @@ app.get('/api/v1/bookings', verifyAdmin, async (req, res, next) => {
   }
 });
 
+// ─── CONTACT FORM & N8N WEBHOOK ──────────────────────────────────────────────
+app.post('/api/v1/contact', async (req, res, next) => {
+  try {
+    const { name, email, phone, preferredDates, message, subject, source } = req.body;
+
+    // Send data to the n8n webhook (configure URL in .env)
+    const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL;
+    
+    if (n8nWebhookUrl) {
+      try {
+        await fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            phone,
+            preferredDates,
+            message,
+            subject,
+            source,
+            timestamp: new Date().toISOString()
+          })
+        });
+        logger.info(`Contact form data sent to n8n webhook for ${email}`);
+      } catch (n8nError) {
+        logger.error('Failed to send data to n8n webhook', n8nError);
+        // We do not fail the user's request if n8n is down, just log it.
+      }
+    } else {
+      logger.warn('N8N_WEBHOOK_URL is not set in environment variables');
+    }
+
+    // You can also add code here to save the contact form to Supabase if needed
+    // Example: await supabase.from('contacts').insert([{ name, email, phone, ... }]);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Message received successfully.' 
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // ─── MOCK ENDPOINTS TO SILENCE 404 ERRORS ───────────────────────────────────
 app.get('/api/v1/experiences', (req, res) => res.json({ success: true, data: [] }));
 app.get('/api/v1/gallery', (req, res) => res.json({ success: true, data: [] }));
